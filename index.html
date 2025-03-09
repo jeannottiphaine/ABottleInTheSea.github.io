@@ -23,7 +23,7 @@
             position: absolute;
             top: 0;
             left: 0;
-            z-index: 1; /* Video stays behind */
+            z-index: 1; /* Video stays behind everything */
         }
 
         #click-zone {
@@ -33,8 +33,7 @@
             width: 40%;
             height: 40%;
             cursor: pointer;
-            display: block; /* Always active */
-            z-index: 2; /* Zone always on top */
+            z-index: 3; /* Click zone always on top */
         }
     </style>
 </head>
@@ -53,17 +52,20 @@
             clickZone = document.getElementById('click-zone'),
             currentSection = 0,
             sections = [
-                { start: 0, end: 8, next: 8 },   // Loop 0-8s → Click to play 8-13s
-                { start: 8, end: 13, next: 13 }, // Play 8-13s → Loop 13-18s
-                { start: 13, end: 18, next: 18 }, // Loop 13-18s → Click to play 18-24s
-                { start: 18, end: 24, next: 24 }, // Play 18-24s → Loop 24-30s
-                { start: 24, end: 30, next: "redirect" } // Last loop → Click to leave
+                { start: 0, end: 7.59, next: 8, loop: true },   // Loop 0-8s → Click to play 8-11s
+                { start: 8, end: 11, next: 11, loop: false }, // Play 8-11s → Click to play 11-16s
+                { start: 11, end: 16, next: 16, loop: true }, // Loop 11-16s → Click to play 16-25s
+                { start: 16, end: 25, next: 25, loop: false }, // Play 16-25s → Click to play 25-30s
+                { start: 25, end: 30, next: "redirect", loop: true } // Last loop → Click to exit
             ];
+
+        let isLooping = false;
 
         function setSection(index) {
             currentSection = index;
             video.currentTime = sections[index].start;
             video.play();
+            isLooping = sections[index].loop;
         }
 
         clickZone.onclick = () => {
@@ -72,9 +74,7 @@
             if (nextStart === "redirect") {
                 window.location.href = "https://jeannottiphaine.myportfolio.com/";
             } else {
-                video.currentTime = nextStart;
-                video.play();
-                currentSection++;
+                setSection(currentSection + 1); // Move to the next section
             }
         };
 
@@ -82,13 +82,27 @@
             let position = video.currentTime;
             let currentEnd = sections[currentSection].end;
 
-            // Loop if in a looping section
-            if (position >= currentEnd && currentSection % 2 === 0) {
-                video.currentTime = sections[currentSection].start;
+            // Si la vidéo atteint la fin d'une section et qu'elle doit boucler, on la réinitialise à son début
+            if (position >= currentEnd) {
+                if (isLooping) {
+                    video.currentTime = sections[currentSection].start;
+                } else {
+                    // Quand la section ne doit pas boucler, on passe à la section suivante
+                    if (currentSection < sections.length - 1) {
+                        setSection(currentSection + 1);
+                    }
+                }
             }
         });
 
-        setSection(0);
+        setSection(0); // Start from section 0
+    </script>
+</body>
+
+</html>
+
+
+        setSection(0); // Start from section 0
     </script>
 </body>
 
